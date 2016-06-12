@@ -16,6 +16,13 @@ var errSome = errors.New("someError")
 func returnError(context.Context) error { return errSome }
 
 func TestSerial(t *testing.T) {
+	ctx := context.Background()
+
+	// empty
+	if err := SerialFunc()(ctx); err != nil {
+		t.Error(err)
+	}
+
 	count := 0
 	createCheckFunc := func(i int) FlowFunc {
 		return func(ctx context.Context) error {
@@ -31,25 +38,25 @@ func TestSerial(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		fs = append(fs, createCheckFunc(i))
 	}
-	if err := SerialFunc(fs...)(context.Background()); err != nil {
+	if err := SerialFunc(fs...)(ctx); err != nil {
 		t.Error(err)
 	}
 
 	// timeout
 	count = 0
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Millisecond)
-	if err := SerialFunc(fs...)(ctx); err != context.DeadlineExceeded {
+	tctx, _ := context.WithTimeout(ctx, 20*time.Millisecond)
+	if err := SerialFunc(fs...)(tctx); err != context.DeadlineExceeded {
 		t.Errorf("must be DeadlineExceeded, given %v", err)
 	}
 
 	// cancel
 	count = 0
-	ctx, cancel := context.WithCancel(context.Background())
+	cctx, cancel := context.WithCancel(ctx)
 	go func() {
 		time.Sleep(20 * time.Microsecond)
 		cancel()
 	}()
-	if err := SerialFunc(fs...)(ctx); err != context.Canceled {
+	if err := SerialFunc(fs...)(cctx); err != context.Canceled {
 		t.Errorf("must be Canceled, given %v", err)
 	}
 
@@ -117,6 +124,12 @@ func TestParallel(t *testing.T) {
 	runtime.GOMAXPROCS(4) // force parallel
 	ctx, cancel := context.WithCancel(context.Background())
 	beforeGoroutines := runtime.NumGoroutine()
+
+	// empty
+	if err := ParallelFunc()(ctx); err != nil {
+		t.Error(err)
+	}
+
 	c := concurrentChecker{}
 	var fs []FlowFunc
 	for i := 0; i < 100; i++ {
