@@ -54,6 +54,10 @@ func parallel(workerCount int, fs ...FlowFunc) FlowFunc {
 
 		for _, f := range fs {
 			go func(f FlowFunc) {
+				if f == nil {
+					goto end
+				}
+
 				if sem != nil {
 					select {
 					case sem <- struct{}{}:
@@ -72,6 +76,7 @@ func parallel(workerCount int, fs ...FlowFunc) FlowFunc {
 					errCh <- err
 					return
 				}
+			end:
 				doneCh <- struct{}{}
 			}(f)
 		}

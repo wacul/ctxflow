@@ -55,12 +55,21 @@ func TestSerial(t *testing.T) {
 
 	// check error
 	count = 0
-	fs = append(append(fs[:3], returnError), fs[3:]...)
-	if err := SerialFunc(fs...)(context.Background()); err != errSome {
+	var fsErr []FlowFunc
+	fsErr = append(append(append(fsErr, fs[:3]...), returnError), fs[3:]...)
+	if err := SerialFunc(fsErr...)(context.Background()); err != errSome {
 		t.Errorf("must be someError, given %v", err)
 	}
 	if count != 3 {
 		t.Errorf("count must be 3 actual %d", count)
+	}
+
+	// with nil func
+	count = 0
+	var fsNil []FlowFunc
+	fsNil = append(append(append(fsNil, fs[:3]...), nil), fs[3:]...)
+	if err := SerialFunc(fsNil...)(context.Background()); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -150,11 +159,20 @@ func TestParallel(t *testing.T) {
 		t.Errorf("must be Canceled, given %v", err)
 	}
 
+	// with error
 	c.Reset()
-
-	fs = append(append(fs[:3], returnError), fs[3:]...)
-	if err := ParallelFunc(fs...)(ctx); err != errSome {
+	var fsErr []FlowFunc
+	fsErr = append(append(append(fsErr, fs[:3]...), returnError), fs[3:]...)
+	if err := ParallelFunc(fsErr...)(ctx); err != errSome {
 		t.Errorf("must be someError, given %v", err)
+	}
+
+	// with nil func
+	c.Reset()
+	var fsNil []FlowFunc
+	fsNil = append(append(append(fsNil, fs[:3]...), nil), fs[3:]...)
+	if err := ParallelFunc(fsNil...)(context.Background()); err != nil {
+		t.Error(err)
 	}
 
 	cancel()
