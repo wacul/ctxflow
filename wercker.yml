@@ -1,12 +1,15 @@
-box: google/golang
 build:
-    steps:
-    - setup-go-workspace
+  box: golang:1.6
+  steps:
+    - setup-go-workspace:
+      package-dir: github.com/wacul/ctxflow
+
     - wercker/golint
     - script:
         name: go get
         code: |
           go get -t ./...
+
     - script:
         name: go test
         code: |
