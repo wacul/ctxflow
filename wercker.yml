@@ -4,6 +4,10 @@ build:
     - setup-go-workspace
     - wercker/golint
     - script:
+        name: go get
+        code: |
+          go get -t ./...
+    - script:
         name: go test
         code: |
           go test ./...
