@@ -105,6 +105,7 @@ func (c *concurrentChecker) F(ctx context.Context) error {
 }
 
 func TestParallel(t *testing.T) {
+	runtime.GOMAXPROCS(4) // force parallel
 	ctx, cancel := context.WithCancel(context.Background())
 	beforeGoroutines := runtime.NumGoroutine()
 	c := concurrentChecker{}
