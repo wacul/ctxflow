@@ -80,17 +80,17 @@ func parallel(workerCount int, fs ...FlowFunc) FlowFunc {
 				doneCh <- struct{}{}
 			}(f)
 		}
-
+		var err error
 		for i := 0; i < len(fs); i++ {
 			select {
-			case err := <-errCh:
-				return err
+			case iErr := <-errCh:
+				err = iErr
 			case <-doneCh:
-			case <-ctx.Done():
-				return ctx.Err()
 			}
 		}
-
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 }
