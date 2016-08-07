@@ -1,6 +1,10 @@
 package ctxflow
 
-import "golang.org/x/net/context"
+import (
+	"fmt"
+
+	"golang.org/x/net/context"
+)
 
 // FlowFunc is a function that receives context and returns error
 type FlowFunc func(ctx context.Context) error
@@ -54,8 +58,22 @@ func parallel(workerCount int, fs ...FlowFunc) FlowFunc {
 
 		for _, f := range fs {
 			go func(f FlowFunc) {
+				defer func() {
+					r := recover()
+					if r == nil {
+						return
+					}
+					switch tr := r.(type) {
+					case error:
+						errCh <- tr
+					default:
+						errCh <- fmt.Errorf("%v", tr)
+					}
+				}()
+
 				if f == nil {
-					goto end
+					doneCh <- struct{}{}
+					return
 				}
 
 				if sem != nil {
@@ -76,22 +94,17 @@ func parallel(workerCount int, fs ...FlowFunc) FlowFunc {
 					errCh <- err
 					return
 				}
-			end:
 				doneCh <- struct{}{}
 			}(f)
 		}
-		var err error
 		for i := 0; i < len(fs); i++ {
 			select {
+			case <-ctx.Done():
+				return ctx.Err()
 			case iErr := <-errCh:
-				if err == nil {
-					err = iErr
-				}
+				return iErr
 			case <-doneCh:
 			}
-		}
-		if err != nil {
-			return err
 		}
 		return nil
 	}
