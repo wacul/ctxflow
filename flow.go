@@ -84,7 +84,7 @@ func parallel(workerCount int, fs ...FlowFunc) FlowFunc {
 		for i := 0; i < len(fs); i++ {
 			select {
 			case iErr := <-errCh:
-				if err != nil {
+				if err == nil {
 					err = iErr
 				}
 			case <-doneCh:
