@@ -1,14 +1,12 @@
 package ctxflow
 
 import (
+	"context"
 	"errors"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
-
-	"runtime"
-
-	"golang.org/x/net/context"
 )
 
 var errSome = errors.New("someError")

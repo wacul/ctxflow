@@ -1,9 +1,8 @@
 package ctxflow
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 )
 
 // FlowFunc is a function that receives context and returns error
